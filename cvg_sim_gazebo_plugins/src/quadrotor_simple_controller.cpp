@@ -96,6 +96,21 @@ void GazeboQuadrotorSimpleController::Load(physics::ModelPtr _model, sdf::Elemen
   else
     state_topic_ = _sdf->GetElement("stateTopic")->GetValue()->GetAsString();
 
+  if (!_sdf->HasElement("inputTopic"))
+    input_topic_ = "/ardrone2_dem/model_input";
+  else
+    input_topic_ = _sdf->GetElement("inputTopic")->GetValue()->GetAsString();
+
+  if (!_sdf->HasElement("forceTorqueTopic"))
+    force_torque_topic = "ardrone2_dem/force_torque";
+  else
+    force_torque_topic = _sdf->GetElement("forceTorqueTopic")->GetValue()->GetAsString();
+
+  if (!_sdf->HasElement("forceTorque2Topic"))
+    force_torque_topic_2 = "ardrone2_dem/force_torque_2";
+  else
+    force_torque_topic_2 = _sdf->GetElement("forceTorque2Topic")->GetValue()->GetAsString();
+
   if (!_sdf->HasElement("bodyName"))
   {
     link = _model->GetLink();
@@ -146,6 +161,11 @@ void GazeboQuadrotorSimpleController::Load(physics::ModelPtr _model, sdf::Elemen
   mass = link->GetInertial()->GetMass();
 
   node_handle_ = new ros::NodeHandle(namespace_);
+
+  // publish command: model input
+  model_input_publisher = node_handle_->advertise<geometry_msgs::WrenchStamped>(input_topic_, 25);
+  force_torque_publisher = node_handle_->advertise<geometry_msgs::WrenchStamped>(force_torque_topic, 25);
+  force_torque_2_publisher = node_handle_->advertise<geometry_msgs::WrenchStamped>(force_torque_topic_2, 25);
 
   // subscribe command: velocity control command
   if (!velocity_topic_.empty())
@@ -274,6 +294,7 @@ void GazeboQuadrotorSimpleController::StateCallback(const nav_msgs::OdometryCons
 // Update the controller
 void GazeboQuadrotorSimpleController::Update()
 {
+//  ROS_INFO("Update function");
   math::Vector3 force, torque;
 
   // Get new commands/state
@@ -328,6 +349,17 @@ void GazeboQuadrotorSimpleController::Update()
   if (max_force_ > 0.0 && force.z > max_force_) force.z = max_force_;
   if (force.z < 0.0) force.z = 0.0;
 
+  // publish model input data
+  model_input.header.stamp = ros::Time::now();
+  model_input.header.frame_id = link_name_;
+  model_input.wrench.force.x = force.x;
+  model_input.wrench.force.y = force.y;
+  model_input.wrench.force.z = force.z;
+  model_input.wrench.torque.x = torque.x;
+  model_input.wrench.torque.y = torque.y;
+  model_input.wrench.torque.z = torque.z;
+  model_input_publisher.publish(model_input);
+
 //  static double lastDebugOutput = 0.0;
 //  if (last_time.Double() - lastDebugOutput > 0.1) {
 //    ROS_DEBUG_NAMED("quadrotor_simple_controller", "Velocity = [%g %g %g], Acceleration = [%g %g %g]", velocity.x, velocity.y, velocity.z, acceleration.x, acceleration.y, acceleration.z);
@@ -360,6 +392,32 @@ void GazeboQuadrotorSimpleController::Update()
 
   // save last time stamp
   last_time = sim_time;
+
+  // publish force and torque data
+  force = link->GetWorldForce();
+  torque = link->GetWorldTorque();
+  force_torque.header.stamp = ros::Time::now();
+  force_torque.header.frame_id = link_name_;
+  force_torque.wrench.force.x = force.x;
+  force_torque.wrench.force.y = force.y;
+  force_torque.wrench.force.z = force.z;
+  force_torque.wrench.torque.x = torque.x;
+  force_torque.wrench.torque.y = torque.y;
+  force_torque.wrench.torque.z = torque.z;
+  force_torque_publisher.publish(force_torque);
+
+  // publish force and torque data
+  force = link->GetRelativeForce();
+  torque = link->GetRelativeTorque();
+  force_torque_2.header.stamp = ros::Time::now();
+  force_torque_2.header.frame_id = link_name_;
+  force_torque_2.wrench.force.x = force.x;
+  force_torque_2.wrench.force.y = force.y;
+  force_torque_2.wrench.force.z = force.z;
+  force_torque_2.wrench.torque.x = torque.x;
+  force_torque_2.wrench.torque.y = torque.y;
+  force_torque_2.wrench.torque.z = torque.z;
+  force_torque_2_publisher.publish(force_torque_2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

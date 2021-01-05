@@ -56,6 +56,9 @@
 #include <nav_msgs/Odometry.h>
 #include <ardrone_autonomy/Navdata.h>
 
+// to publish model input
+#include <geometry_msgs/WrenchStamped.h>
+
 #define UNKNOWN_MODEL       0
 #define INITIALIZE_MODEL    1
 #define LANDED_MODEL        2
@@ -124,6 +127,17 @@ private:
   double motion_small_noise_;
   double motion_drift_noise_;
   double motion_drift_noise_time_;
+
+  // to publish model input
+  std::string                   input_topic_;
+  ros::Publisher                model_input_publisher;
+  geometry_msgs::WrenchStamped  model_input;
+  std::string                   force_torque_topic;
+  ros::Publisher                force_torque_publisher;
+  geometry_msgs::WrenchStamped  force_torque;
+  std::string                   force_torque_topic_2;
+  ros::Publisher                force_torque_2_publisher;
+  geometry_msgs::WrenchStamped  force_torque_2;
 
   class PIDController {
   public:

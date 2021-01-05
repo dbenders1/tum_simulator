@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Simulator wind plugin (derived from ethz-asl/rotors_simulator ROS package) -->
+  <xacro:macro name="wind_plugin_macro"
+    params="namespace xyz_offset wind_direction wind_force_mean
+      wind_gust_direction wind_gust_duration wind_gust_start
+      wind_gust_force_mean wind_speed_mean">
+    <gazebo>
+      <plugin filename="librotors_gazebo_wind_plugin.so" name="wind_plugin">
+        <frameId>world</frameId>
+        <linkName>base_link</linkName>
+        <robotNamespace>${namespace}</robotNamespace>
+        <xyzOffset>${xyz_offset}</xyzOffset> <!-- [m] [m] [m] -->
+        <windDirection>${wind_direction}</windDirection>
+        <windForceMean>${wind_force_mean}</windForceMean> <!-- [N] -->
+        <windGustDirection>${wind_gust_direction}</windGustDirection>
+        <windGustDuration>${wind_gust_duration}</windGustDuration> <!-- [s] -->
+        <windGustStart>${wind_gust_start}</windGustStart> <!-- [s] -->
+        <windGustForceMean>${wind_gust_force_mean}</windGustForceMean> <!-- [N] -->
+        <windSpeedMean>${wind_speed_mean}</windSpeedMean> <!-- [m/s] -->
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>
